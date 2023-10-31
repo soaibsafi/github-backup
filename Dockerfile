@@ -1,7 +1,7 @@
 FROM python:3.11-alpine3.18
 
 ENV GITHUB_ACCESS_TOKEN=github_access_token
-ENV SAVE_DIR=/github-backup/backup
+ENV BACKUP_DIR=/github-backup/backup
 
 COPY /github_backup /github-backup/github_backup
 COPY requirements.txt /github-backup/requirements.txt

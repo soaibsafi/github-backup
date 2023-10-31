@@ -56,7 +56,7 @@ def get_repos(username:str, token:str) -> list:
   list: List of repositories
   
   """
-  print(f"Getting repos for {username} and token {token}")
+  print(f"Getting repos for {username}")
   headers = {
     'Accept': 'application/vnd.github+json',
     'Authorization': f'Bearer {token}',
@@ -112,7 +112,7 @@ def create_dir(name:str, permission:int) -> str:
     os.makedirs(name, mode=permission, exist_ok=True)
   return name
 
-def backup_repo(repo_name:str, clone_url:str, save_dir:str, username:str, token:str, sync:bool=False) -> None:
+def backup_repo(repo_name:str, clone_url:str, save_dir:str, username:str, token:str) -> None:
   """
   Backup or sync a GitHub repository.
   
@@ -122,13 +122,11 @@ def backup_repo(repo_name:str, clone_url:str, save_dir:str, username:str, token:
   save_dir(str): Path to save repository
   username(str): GitHub username
   token(str): GitHub access token
-  sync(bool): Sync repository if True, otherwise backup repository
-  
+ 
   Returns:
   None
   """
-  message = "Backing up..." if not sync else "Syncing..."
-  print(f"{message} {repo_name} from {clone_url} to {save_dir}", file=sys.stderr)
+  print(f"Backing up... {repo_name} from {clone_url} to {save_dir}", file=sys.stderr)
   
   parsed_url = urllib.parse.urlparse(clone_url)
   list_ = list(parsed_url)
@@ -137,32 +135,25 @@ def backup_repo(repo_name:str, clone_url:str, save_dir:str, username:str, token:
   save_path = os.path.join(save_dir, repo_name) 
   
   create_dir(save_path, 0o770)
+
+  subprocess.run([
+    'git',
+    'init',
+    '--bare',
+    '--quiet'
+  ], cwd=save_path)
   
-  if not sync:
-    subprocess.run([
-      'git',
-      'clone',
-      '--quiet',
-      repo_url,
-    ], cwd=save_path)
-  else: 
-    subprocess.run([
-      'git',
-      'init',
-      '--bare',
-      '--quiet'
-    ], cwd=save_path)
-    
-    subprocess.run([
-      'git',
-      'fetch',
-      '--force',
-      '--prune',
-      '--tags',
-      repo_url,
-      'refs/heads/*:refs/heads/*',
-      'refs/tags/*:refs/tags/*',
-    ], cwd=save_path)
+  subprocess.run([
+    'git',
+    'fetch',
+    '--force',
+    '--prune',
+    '--quiet',
+    '--tags',
+    repo_url,
+    'refs/heads/*:refs/heads/*',
+    'refs/tags/*:refs/tags/*',
+  ], cwd=save_path)
   
 def parse_arguments():
   """
@@ -187,10 +178,9 @@ def main():
   args = parse_arguments()
   load_dotenv(dotenv_path=args.env_file)
   token = os.getenv('GITHUB_ACCESS_TOKEN')
-  sync = True if args.sync else False
   username = get_github_user(token)
-  save_dir = os.getenv('SAVE_DIR')
-  save_path = os.path.expanduser(save_dir)
+  save_dir = os.getenv('BACKUP_DIR')
+  save_path = os.path.join(save_dir)
   if create_dir(save_path, 0o770):
     print(f"Created directory {save_path}", file=sys.stderr)
   repos = get_repos(username, token)
@@ -201,7 +191,7 @@ def main():
     save_path = os.path.join(save_dir, owner)
     create_dir(save_path, 0o770)
     clone_url = repo['clone_url']
-    backup_repo(name, clone_url, save_path, username, token, sync)
+    backup_repo(name, clone_url, save_path, username, token)
 
 if __name__ == '__main__':
   main()

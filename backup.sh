@@ -6,7 +6,7 @@ if [ ! -f .env ]; then
 fi
 
 echo "GITHUB_ACCESS_TOKEN=$GITHUB_ACCESS_TOKEN" > .env
-echo "SAVE_DIR=$SAVE_DIR" >> .env
+echo "BACKUP_DIR=$BACKUP_DIR" >> .env
 
 
 while true
