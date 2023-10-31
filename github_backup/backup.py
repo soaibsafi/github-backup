@@ -138,22 +138,12 @@ def backup_repo(repo_name:str, clone_url:str, save_dir:str, username:str, token:
 
   subprocess.run([
     'git',
-    'init',
-    '--bare',
-    '--quiet'
-  ], cwd=save_path)
-  
-  subprocess.run([
-    'git',
-    'fetch',
-    '--force',
-    '--prune',
+    'clone',
+    '--mirror',
     '--quiet',
-    '--tags',
     repo_url,
-    'refs/heads/*:refs/heads/*',
-    'refs/tags/*:refs/tags/*',
   ], cwd=save_path)
+
   
 def parse_arguments():
   """
