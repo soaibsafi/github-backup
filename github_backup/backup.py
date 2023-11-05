@@ -158,6 +158,7 @@ def parse_arguments():
   arg_parser = argparse.ArgumentParser(description="Backup or sync GitHub repositories")
   arg_parser.add_argument('-b', '--backup', action='store_true', help="Backup repositories")
   arg_parser.add_argument('-s', '--sync', action='store_true', help="Sync repositories")
+  arg_parser.add_argument('-x', default=None, help="Backup/Sync repositories with prefix")
   arg_parser.add_argument('-e', '--env-file', default='.env', required=True, help="Path to .env file")
   
   return arg_parser.parse_args()
@@ -167,6 +168,8 @@ def parse_arguments():
 def main():
   args = parse_arguments()
   load_dotenv(dotenv_path=args.env_file)
+  prefix = args.x
+  print(f"Prefix: {prefix}", file=sys.stderr)
   token = os.getenv('GITHUB_ACCESS_TOKEN')
   username = get_github_user(token)
   save_dir = os.getenv('BACKUP_DIR')
@@ -177,6 +180,9 @@ def main():
   
   for repo in repos:
     name = valid_dir_name(repo['name'])
+    if prefix is not None:
+      if prefix not in name:
+        continue
     owner = valid_dir_name(repo['owner']['login'])
     save_path = os.path.join(save_dir, owner)
     create_dir(save_path, 0o770)
